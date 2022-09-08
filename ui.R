@@ -31,7 +31,7 @@ body <- dashboardBody(
         )
       ),
       column(width = 2,
-        actionButton("save", "Save", style = "background-color:dodgerblue; color:white", width = "100%")
+        actionButton("save", "Save", style = "background-color:grey; color:white", width = "100%")
       ),
       column(width = 2,
         actionButton("cancel", "Cancel", style = "background-color:red; color:white", width = "100%")

@@ -1,6 +1,6 @@
 server <- function(session, input, output) {
 
-  # === LOGIN PART ===
+  # LOGIN LOGIC ====
 
   # call the server part
   # check_credentials returns a function to authenticate users
@@ -12,21 +12,64 @@ server <- function(session, input, output) {
     reactiveValuesToList(res_auth)
   })
 
-  # ==== SERVER LOGIC ===
+  # HELPERS ====
 
-  EXTRACTOR <- reactive({
-    # reactiveValuesToList(res_auth)$user
-    "BSKH"
-  })
+  make_conn <- function() dbConnect(RPostgres::Postgres(), "sedacrict_sr_extraction")
 
-  make_conn <- function() dbConnect(SQLite(), "data/sedacrict_scoping_review.db")
+  fetch_choices <- function(conn, col_name, table_name) {
+    dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name} ORDER BY {col_name}")) %>%
+      unlist(use.names = FALSE)
+  }
 
   save_data <- function(input_as_json, extraction_done = 0) {
     conn <- make_conn()
 
-    # No longer pending
-    extractor_group <- if (EXTRACTOR() == "BSKH") "bskh" else "rest"
-    dbExecute(conn, glue("UPDATE rcts SET pending_{extractor_group} = 0 WHERE rct_name = '{input$rct_name}'"))
+    # LOGIC FOR DYNAMIC DROP-DOWN FIELDS
+    # Update list of causal inference methods
+    for (cim in input$causal_inference_methods) {
+      method_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(method_name) FROM causal_inference_methods WHERE method_name = '{cim}'"))
+      if (isFALSE(method_exists)) {
+        dbExecute(conn, glue("INSERT INTO causal_inference_methods VALUES ('{cim}', '{md5(cim)}')"))
+      }
+    }
+
+    # Update datasets
+    for (dsn in input$dataset_names) {
+      dataset_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(dataset_name) FROM datasets WHERE dataset_name = '{dsn}'"))
+      if (isFALSE(dataset_exists)) {
+        dbExecute(conn, glue("INSERT INTO datasets VALUES ('{dsn}', '{md5(dsn)}')"))
+      }
+    }
+
+    # Update data types
+    update_db <- function(conn, regex, col_name, table_name) {
+      input_as_list <- reactiveValuesToList(input)
+      selected <- unlist(input_as_list[grepl(regex, names(input_as_list))])
+      if (length(selected) > 0) {
+        selected_as_string <- paste(sprintf("'%s'", selected), collapse = ", ")
+        existing <- unlist(dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name} WHERE {col_name} IN ({selected_as_string})")))
+        to_add <- setdiff(selected, existing)
+        if (length(to_add) > 0) {
+          values_as_string <- paste0("('", to_add, "')", collapse = ", ")
+          dbExecute(conn, glue("INSERT INTO {table_name} VALUES {values_as_string}"))
+        }
+      }
+    }
+
+    update_db(conn, "journal_principal_report", "journal_name", "journals")
+
+    update_db(conn, "cim_id_.+__estimation_techniques", "technique_name", "estimation_techniques")
+    update_db(conn, "cim_id_.+__software_languages", "language_name", "software_languages")
+    update_db(conn, "cim_id_.+__software_libraries", "library_name", "software_libraries")
+
+    update_db(conn, "dataset_id_.+__countries", "country_name", "countries")
+    update_db(conn, "dataset_id_.+__populations", "population_name", "populations")
+    update_db(conn, "dataset_id_.+__provenance", "provenance_name", "provenance")
+    update_db(conn, "dataset_id_.+__data_types", "data_type_name", "data_types")
+    update_db(conn, "dataset_id_.+__data_models", "data_model_name", "data_models")
+    update_db(conn, "dataset_id_.+__vocabs", "vocab_name", "vocabs")
+
+    print(fromJSON(input_as_json))
 
     # Remove old versions, if they exist
     dbExecute(
@@ -50,20 +93,19 @@ server <- function(session, input, output) {
       append = TRUE
     )
 
-    for (cim in input$causal_inference_methods) {
-      print(cim)
-      x <- dbGetQuery(conn, glue("SELECT * FROM causal_inference_methods WHERE method_name = '{cim}'"))
-      if (nrow(x) == 0) {
-        dbExecute(conn, glue("INSERT INTO causal_inference_methods VALUES ('{cim}', '{md5(cim)}')"))
-      }
-    }
+    # No longer pending
+    extractor_group <- if (EXTRACTOR() == "BSKH") "bskh" else "rest"
+    dbExecute(conn, glue("UPDATE rcts SET pending_{extractor_group} = 0 WHERE rct_name = '{input$rct_name}'"))
 
     dbDisconnect(conn)
   }
 
-  submit_extraction <- function(input_as_json) {
-    save_data(input_as_json, extraction_done = 1)
-  }
+  # REACTIVE DATA OBJECTS ====
+
+  EXTRACTOR <- reactive({
+    # reactiveValuesToList(res_auth)$user
+    "BSKH"
+  })
 
   defaults <- reactive({
     conn <- make_conn()
@@ -75,13 +117,24 @@ server <- function(session, input, output) {
         input$rct_name
       )
     )
+
+    if (nrow(res) == 0) {
+      # Use data already extracted, if available
+      res <- dbGetQuery(
+        conn,
+        sprintf(
+          "SELECT extracted_data FROM extractions WHERE extractor = 'initial' AND rct_name = '%s'",
+          input$rct_name
+        )
+      )
+    }
     dbDisconnect(conn)
 
     tryCatch(fromJSON(as.character(res)), error = function(err) list())
   })
 
   pruned_data_as_json <- reactive({
-    items_to_remove <- c(
+    shiny_items_to_remove <- c(
       "sidebarItemExpanded",
       "sidebarCollapsed",
       "shinyjs-resettable-form",
@@ -90,14 +143,20 @@ server <- function(session, input, output) {
 
     input_as_list <- reactiveValuesToList(input)
 
-    ci_items_to_remove <- input_as_list[grepl("cim_id_[0-9a-z]{32}__name", names(input_as_list))] %>%
-      keep(~ !. %in% input$causal_inference_methods) %>%
-      names() %>%
-      str_extract("cim_id_[0-9a-z]{32}__") %>%
-      map(~ paste0(., c("estimation_technique", "name", "software_languages", "software_libraries"))) %>%
-      unlist()
+    if ("None" %in% input_as_list$causal_inference_methods) {
+      input_as_list$causal_inference_methods <- "None"
+    }
+    ci_items_to_remove <- str_extract(names(input_as_list), "cim_id_.+") %>%
+      map_lgl(~ any(str_detect(., paste(md5(input$causal_inference_methods %||% "")), negate = TRUE)))
 
-    idx_to_remove <- names(input_as_list) %in% c(items_to_remove, ci_items_to_remove)
+    if ("None" %in% input_as_list$dataset_names) {
+      input_as_list$dataset_names <- "None"
+    }
+    dataset_items_to_remove <- str_extract(names(input_as_list), "dataset_id_.+") %>%
+      map_lgl(~ any(str_detect(., paste(md5(input$dataset_names %||% "")), negate = TRUE)))
+
+    items_to_remove <- c(shiny_items_to_remove, ci_items_to_remove, dataset_items_to_remove)
+    idx_to_remove <- names(input_as_list) %in% items_to_remove
     ordered_names <- sort(names(input_as_list[!idx_to_remove]))
     final_data <- input_as_list[ordered_names]
 
@@ -108,7 +167,7 @@ server <- function(session, input, output) {
     toJSON(final_data)
   })
 
-  # When the Submit button is clicked, submit the response
+  # SAVING AND SUBMISSION LOGIC ====
   observeEvent(input$submit, {
 
     # User-experience stuff
@@ -116,9 +175,8 @@ server <- function(session, input, output) {
     shinyjs::show("submit_msg")
     shinyjs::hide("error")
 
-    # Save the data (show an error message in case of error)
     tryCatch({
-      submit_extraction(pruned_data_as_json())
+      save_data(pruned_data_as_json(), extraction_done = 1)
       shinyjs::reset("form")
       shinyjs::show("thankyou_msg")
       shinyjs::hide("form")
@@ -145,14 +203,17 @@ server <- function(session, input, output) {
     save_data(pruned_data_as_json())
   })
 
-
   observeEvent(input$cancel, {
     updateTextInput(session, "rct_selector_kicker", value = now())
     reset("form")
   })
 
+  observeEvent(input$open_covidence, {
+    shinyjs::runjs(glue("window.open('{defaults()$covidence_link}', '_blank')"))
+  })
+
   observeEvent(input$trial_stopped_early, {
-    if (input$trial_stopped_early == "yes") {
+    if (input$trial_stopped_early == "Yes") {
       shinyjs::show("trial_stopped_reason")
       shinyjs::show("trial_stopped_predefined_rule")
       if (input$trial_stopped_reason == "N/A") {
@@ -168,129 +229,152 @@ server <- function(session, input, output) {
 
 	# REACTIVE DATA ELEMENTS ====
 
-  output$the_form <- renderUI({
-    req(input$rct_name)
-
-    conn <- make_conn()
-    causal_inference_methods <- dbGetQuery(conn, "SELECT method_name FROM causal_inference_methods ORDER BY method_name") %>%
-      as.list()
-    dbDisconnect(conn)
-
-    tagList(
-      fluidRow(
-        box(width = 6,
-            textInput("doi_principal_report", "DOI of principal report", width = "100%", value = defaults()$doi_principal_report),
-            selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = valid_journals, selected = defaults()$journal_principal_report %||% character(0), size = length(valid_journals)),
-            textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
-            textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
-            textInput("n_enrolled_participants", "No. enrolled participants", width = "100%", value = defaults()$n_enrolled_participants), # TODO: consider validation (validate()/need())
-            textInput("n_centres", "No. centres", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
-        ),
-        box(width = 6,
-            textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III"),
-            radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
-            radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
-            radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
-            hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason, placeholder = "E.g. futility or superiority")),
-            hidden(radioButtons("trial_stopped_predefined_rule", "Terminated using predefined rule?", choices = yes_no_choices, selected = defaults()$trial_stopped_predefined_rule %||% character(0)))
-        )
-      ),
-      fluidRow(
-        box(width = 6, title = "Causal inference methods", collapsible = TRUE,
-            selectizeInput("causal_inference_methods", label = NULL, choices = causal_inference_methods, multiple = TRUE,
-                           width = "100%", selected = defaults()$causal_inference_methods %||% character(0), options = list(create = TRUE)),
-            uiOutput("dynamic_ci_fields")
-        ),
-        box(width = 6, title = "Datasets used", collapsible = TRUE,
-            textInput("n_datasets", label = NULL, width = "100%", value = defaults()$n_datasets, placeholder = "Number of datasets"),
-            uiOutput("dynamic_dataset_fields")
-        )
-      )
-    )
-  })
-
-	# REACTIVE INPUT FIELDS ====
   output$rct_selector <- renderUI({
     req(input$rct_selector_kicker)
 
     extractor_group <- if (EXTRACTOR() == "BSKH") "bskh" else "rest"
     conn <- make_conn()
     choices <- dbGetQuery(conn, glue(
-      "SELECT rct_name FROM rcts WHERE pending_{extractor_group} == 1
+      "SELECT rct_name FROM rcts WHERE pending_{extractor_group} = 1
       UNION ALL
-      SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}'
-        AND extraction_done = 0;
-      ",
+      SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0;"
     )) %>%
-      as.list() %>%
+      arrange(rct_name) %>%
+      unlist(use.names = FALSE) %>%
       c("", .)
     dbDisconnect(conn)
 
     selectizeInput("rct_name", label = NULL, choices = choices, width = "100%", selected = "")
   })
 
+
+  output$the_form <- renderUI({
+    req(input$rct_name)
+
+    # Pull options for dynamic drop-downs
+    conn <- make_conn()
+    causal_inference_methods <- fetch_choices(conn, "method_name", "causal_inference_methods")
+    journals <- fetch_choices(conn, "journal_name", "journals")
+    datasets <- fetch_choices(conn, "dataset_name", "datasets")
+    dbDisconnect(conn)
+
+    tagList(
+      fluidRow(column(12,
+        hidden(textInput("covidence_link", label = NULL, value = defaults()$covidence_link)),
+        actionButton("open_covidence", "Click here to open Covidence record", style = "background-color:dodgerblue; color:white", width = "100%")
+      )),
+      fluidRow(br()),
+      fluidRow(
+        box(width = 6,
+          textInput("doi_principal_report", "DOI of principal report", width = "100%", value = defaults()$doi_principal_report),
+          selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = journals, selected = defaults()$journal_principal_report %||% character(0), options = list(create = TRUE)),
+          textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
+          textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
+          textInput("n_enrolled_participants", "No. enrolled participants", width = "100%", value = defaults()$n_enrolled_participants), # TODO: consider validation (validate()/need())
+          textInput("n_centres", "No. centres", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
+        ),
+        box(width = 6,
+          textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III"),
+          radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
+          radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
+          radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
+          hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason, placeholder = "E.g. futility or superiority")),
+          hidden(radioButtons("trial_stopped_predefined_rule", "Terminated using predefined rule?", choices = yes_no_choices, selected = defaults()$trial_stopped_predefined_rule %||% character(0))),
+          textAreaInput("remarks", "Remarks", value = defaults()$remarks, width = "100%", rows = 2)
+        )
+      ),
+      fluidRow(
+        box(width = 6, title = "Causal inference methods", collapsible = TRUE,
+          selectizeInput("causal_inference_methods", label = NULL, choices = causal_inference_methods, multiple = TRUE,
+                         width = "100%", selected = defaults()$causal_inference_methods %||% character(0), options = list(create = TRUE)),
+          uiOutput("dynamic_ci_fields")
+        ),
+        box(width = 6, title = "Datasets used", collapsible = TRUE,
+          selectizeInput("dataset_names", label = NULL, choices = datasets, multiple = TRUE,
+                         width = "100%", selected = defaults()$dataset_names %||% character(0), options = list(create = TRUE)),
+          uiOutput("dynamic_dataset_fields")
+        )
+      )
+    )
+  })
+
 	output$dynamic_ci_fields <- renderUI({
 	  req(input$rct_name)
+
+	  # Pull options for dynamic drop-downs
+	  conn <- make_conn()
+	  estimation_techniques <- fetch_choices(conn, "technique_name", "estimation_techniques")
+	  software_languages <- fetch_choices(conn, "language_name", "software_languages")
+	  software_libraries <- fetch_choices(conn, "library_name", "software_libraries")
+	  dbDisconnect(conn)
 
 		set_up_fields <- function(m) {
 			id_prefix <- sprintf("cim_id_%s__", md5(m, key = "4131"))
 			box(width = 6,
 			  h4(m, style = "color:darkorange"),
 			  hidden(textInput(paste0(id_prefix, "name"), label = NULL, value = m)),
-				selectizeInput(paste0(id_prefix, "estimation_technique"), "Estimation technique", selected = defaults()[[paste0(id_prefix, "estimation_technique")]], choices = estimation_techniques, multiple = TRUE, options = list(create = TRUE)),
-				selectizeInput(paste0(id_prefix, "software_languages"), "Software, language(s)", selected = defaults()[[paste0(id_prefix, "software_languages")]], choices = software_languages, multiple = TRUE, options = list(create = TRUE)),
-				selectizeInput(paste0(id_prefix, "software_libraries"), "Software, library/ies", selected = defaults()[[paste0(id_prefix, "software_libraries")]], choices = software_libraries, multiple = TRUE, options = list(create = TRUE))
+				selectizeInput(paste0(id_prefix, "estimation_techniques"), "Estimation technique(s)", selected = defaults()[[paste0(id_prefix, "estimation_techniques")]] %||% character(0), choices = estimation_techniques, width = "100%", multiple = TRUE, options = list(create = TRUE)),
+				selectizeInput(paste0(id_prefix, "software_languages"), "Software, language(s)", selected = defaults()[[paste0(id_prefix, "software_languages")]] %||% character(0), choices = software_languages, width = "100%", multiple = TRUE, options = list(create = TRUE)),
+				selectizeInput(paste0(id_prefix, "software_libraries"), "Software, library/ies", selected = defaults()[[paste0(id_prefix, "software_libraries")]] %||% character(0), choices = software_libraries, width = "100%", multiple = TRUE, options = list(create = TRUE))
 			)
 		}
 
 		if ("None" %in% input$causal_inference_methods) {
 		  id_prefix <- sprintf("cim_id_%s__", md5("None", key = "4131"))
-		  hidden(textInput(paste0(id_prefix, "name"), "name", "None"))
-
-		  fluidRow(
-		    column(6,
-		      textInput(paste0(id_prefix, "corresponding_author_name"), "Corresponding author's name", value = defaults()[[paste0(id_prefix, "corresponding_author_name")]], width = "100%")
-		    ),
-		    column(6,
-		      textInput(paste0(id_prefix, "corresponding_author_email"), "Corresponding author's email", value = defaults()[[paste0(id_prefix, "corresponding_author_email")]], width = "100%")
-		    )
+		  tagList(
+  		  hidden(textInput(paste0(id_prefix, "name"), "name", "None")),
+  		  fluidRow(column(12,
+          textInput(paste0(id_prefix, "title_principal_report"), "Title of principal report", value = defaults()[[paste0(id_prefix, "title_principal_report")]], width = "100%")
+        )),
+  		  fluidRow(
+  		    column(6,
+  		      textInput(paste0(id_prefix, "corresponding_author_name"), "Corresponding author's name", value = defaults()[[paste0(id_prefix, "corresponding_author_name")]], width = "100%")
+  		    ),
+  		    column(6,
+  		      textInput(paste0(id_prefix, "corresponding_author_email"), "Corresponding author's email", value = defaults()[[paste0(id_prefix, "corresponding_author_email")]], width = "100%")
+  		    )
+  		  )
 		  )
-
-
-		  # TODO: add also corresponding author info so we can collect that
-
 		} else {
 		  lapply(input$causal_inference_methods, set_up_fields)
 		}
 	})
 
 	output$dynamic_dataset_fields <- renderUI({
-	  req(input$n_datasets)
+	  req(input$rct_name)
 
-	  set_up_fields <- function(i) {
-			id_prefix <- sprintf("dataset_id_%s__", i)
-			box(width = 6,
-			  h4(sprintf("Dataset #%i", i), style = "color:dodgerblue"),
-			  textInput(paste0(id_prefix, "dataset_name"), "Name of dataset", value = defaults()[[paste0(id_prefix, "dataset_name")]], width = "100%"),
-			  selectizeInput(paste0(id_prefix, "countries"), "Country/ies of origin", selected = defaults()[[paste0(id_prefix, "countries")]], choices = countries, multiple = TRUE, options = list(create = TRUE)),
-			  textInput(paste0(id_prefix, "n_subjects"), "No. subjects", value = defaults()[[paste0(id_prefix, "n_subjects")]], width = "100%"), # TODO: consider validation (validate()/need())
-			  selectizeInput(paste0(id_prefix, "patient_population"), "Patient population", choices = patient_populations, selected = defaults()[[paste0(id_prefix, "patient_population")]], multiple = TRUE, options = list(create = TRUE))
-			)
-		}
+	  # Pull options for dynamic drop-downs
+	  conn <- make_conn()
+	  countries <- fetch_choices(conn, "country_name", "countries")
+	  populations <- fetch_choices(conn, "population_name", "populations")
+	  provenance <- fetch_choices(conn, "provenance_name", "provenance")
+	  data_types <- fetch_choices(conn, "data_type_name", "data_types")
+	  data_models <- fetch_choices(conn, "data_model_name", "data_models")
+	  vocabs <- fetch_choices(conn, "vocab_name", "vocabs")
+	  dbDisconnect(conn)
 
-		lapply(seq_len(parse_integer(input$n_datasets)), set_up_fields)
-	})
+	  set_up_fields <- function(d) {
+	    id_prefix <- sprintf("dataset_id_%s__", md5(d, key = "4131"))
+	    box(width = 6,
+	        h4(d, style = "color:dodgerblue"),
+	        hidden(textInput(paste0(id_prefix, "name"), label = NULL, value = d)),
+	        selectizeInput(paste0(id_prefix, "countries"), "Country/ies of origin", selected = defaults()[[paste0(id_prefix, "countries")]], choices = countries, multiple = TRUE, options = list(create = TRUE)),
+	        textInput(paste0(id_prefix, "n_subjects"), "No. subjects", value = defaults()[[paste0(id_prefix, "n_subjects")]], width = "100%"), # TODO: consider validation (validate()/need())
+	        selectizeInput(paste0(id_prefix, "populations"), "Patient population", choices = populations, selected = defaults()[[paste0(id_prefix, "populations")]], multiple = TRUE, options = list(create = TRUE)),
+	        selectizeInput(paste0(id_prefix, "provenance"), "Provenance", choices = provenance, selected = defaults()[[paste0(id_prefix, "provenance")]], multiple = TRUE, options = list(create = TRUE)),
+	        selectizeInput(paste0(id_prefix, "data_types"), "Data types", choices = data_types, selected = defaults()[[paste0(id_prefix, "data_types")]], multiple = TRUE, options = list(create = TRUE)),
+	        selectizeInput(paste0(id_prefix, "data_models"), "Data model(s)", choices = data_models, selected = defaults()[[paste0(id_prefix, "data_models")]], multiple = TRUE, options = list(create = TRUE)),
+	        selectizeInput(paste0(id_prefix, "vocabs"), "Vocabularies/ontologies", choices = vocabs, selected = defaults()[[paste0(id_prefix, "vocabs")]], multiple = TRUE, options = list(create = TRUE)),
+	        radioButtons(paste0(id_prefix, "data_are_public"), "Are data publicly available?", choices = yes_no_choices, selected = defaults()[[paste0(id_prefix, "data_are_public")]] %||% character(0))
+	    )
+	  }
 
-	# REACTIVE OUTPUTS
-
-
-	data_file_path <- reactive({
-	  file.path("data", sprintf("%s_%s.yaml", input$rct_name, EXTRACTOR()))
-	})
-
-	output$full_data_extraction <- renderText({
-	  # cat(pruned_data_as_yaml())
-	  fromJSON(pruned_data_as_json())
+	  if ("None" %in% input$dataset_names) {
+	    id_prefix <- sprintf("dataset_id_%s__", md5("None", key = "4131"))
+	    hidden(textInput(paste0(id_prefix, "name"), "name", "None"))
+	  } else {
+	    lapply(input$dataset_names, set_up_fields)
+	  }
 	})
 }
 
