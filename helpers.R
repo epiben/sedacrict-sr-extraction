@@ -8,7 +8,7 @@ library(readr)
 library(purrr)
 library(rjson)
 library(openssl)
-library(RSQLite)
+library(RPostgres)
 library(stringr)
 library(glue)
 
