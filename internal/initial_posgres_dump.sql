@@ -24,7 +24,7 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 204 (class 1259 OID 26236)
--- Name: causal_inference_methods; Type: TABLE; Schema: public; Owner: postgres
+-- Name: causal_inference_methods; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.causal_inference_methods (
@@ -37,7 +37,7 @@ ALTER TABLE public.causal_inference_methods OWNER TO pi;
 
 --
 -- TOC entry 211 (class 1259 OID 26278)
--- Name: countries; Type: TABLE; Schema: public; Owner: postgres
+-- Name: countries; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.countries (
@@ -49,7 +49,7 @@ ALTER TABLE public.countries OWNER TO pi;
 
 --
 -- TOC entry 208 (class 1259 OID 26260)
--- Name: data_models; Type: TABLE; Schema: public; Owner: postgres
+-- Name: data_models; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.data_models (
@@ -61,7 +61,7 @@ ALTER TABLE public.data_models OWNER TO pi;
 
 --
 -- TOC entry 207 (class 1259 OID 26254)
--- Name: data_types; Type: TABLE; Schema: public; Owner: postgres
+-- Name: data_types; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.data_types (
@@ -73,7 +73,7 @@ ALTER TABLE public.data_types OWNER TO pi;
 
 --
 -- TOC entry 205 (class 1259 OID 26242)
--- Name: datasets; Type: TABLE; Schema: public; Owner: postgres
+-- Name: datasets; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.datasets (
@@ -86,7 +86,7 @@ ALTER TABLE public.datasets OWNER TO pi;
 
 --
 -- TOC entry 213 (class 1259 OID 26290)
--- Name: estimation_techniques; Type: TABLE; Schema: public; Owner: postgres
+-- Name: estimation_techniques; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.estimation_techniques (
@@ -98,7 +98,7 @@ ALTER TABLE public.estimation_techniques OWNER TO pi;
 
 --
 -- TOC entry 203 (class 1259 OID 26230)
--- Name: extractions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: extractions; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.extractions (
@@ -113,7 +113,7 @@ ALTER TABLE public.extractions OWNER TO pi;
 
 --
 -- TOC entry 210 (class 1259 OID 26272)
--- Name: journals; Type: TABLE; Schema: public; Owner: postgres
+-- Name: journals; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.journals (
@@ -125,7 +125,7 @@ ALTER TABLE public.journals OWNER TO pi;
 
 --
 -- TOC entry 212 (class 1259 OID 26284)
--- Name: populations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: populations; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.populations (
@@ -137,7 +137,7 @@ ALTER TABLE public.populations OWNER TO pi;
 
 --
 -- TOC entry 206 (class 1259 OID 26248)
--- Name: provenance; Type: TABLE; Schema: public; Owner: postgres
+-- Name: provenance; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.provenance (
@@ -149,7 +149,7 @@ ALTER TABLE public.provenance OWNER TO pi;
 
 --
 -- TOC entry 202 (class 1259 OID 26224)
--- Name: rcts; Type: TABLE; Schema: public; Owner: postgres
+-- Name: rcts; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.rcts (
@@ -169,7 +169,7 @@ ALTER TABLE public.rcts OWNER TO pi;
 
 --
 -- TOC entry 214 (class 1259 OID 26296)
--- Name: software_languages; Type: TABLE; Schema: public; Owner: postgres
+-- Name: software_languages; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.software_languages (
@@ -181,7 +181,7 @@ ALTER TABLE public.software_languages OWNER TO pi;
 
 --
 -- TOC entry 215 (class 1259 OID 26302)
--- Name: software_libraries; Type: TABLE; Schema: public; Owner: postgres
+-- Name: software_libraries; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.software_libraries (
@@ -193,7 +193,7 @@ ALTER TABLE public.software_libraries OWNER TO pi;
 
 --
 -- TOC entry 209 (class 1259 OID 26266)
--- Name: vocabs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: vocabs; Type: TABLE; Schema: public; Owner: shiny
 --
 
 CREATE TABLE public.vocabs (
@@ -206,7 +206,7 @@ ALTER TABLE public.vocabs OWNER TO pi;
 --
 -- TOC entry 3251 (class 0 OID 26236)
 -- Dependencies: 204
--- Data for Name: causal_inference_methods; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: causal_inference_methods; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.causal_inference_methods (method_name, method_id) FROM stdin;
@@ -225,7 +225,7 @@ None	6adf97f83acf6453d4a6a4b1070f3754
 --
 -- TOC entry 3258 (class 0 OID 26278)
 -- Dependencies: 211
--- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: countries; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.countries (country_name) FROM stdin;
@@ -485,7 +485,7 @@ Unreported
 --
 -- TOC entry 3255 (class 0 OID 26260)
 -- Dependencies: 208
--- Data for Name: data_models; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: data_models; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.data_models (data_model_name) FROM stdin;
@@ -501,7 +501,7 @@ Unreported
 --
 -- TOC entry 3254 (class 0 OID 26254)
 -- Dependencies: 207
--- Data for Name: data_types; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: data_types; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.data_types (data_type_name) FROM stdin;
@@ -517,7 +517,7 @@ Unreported
 --
 -- TOC entry 3252 (class 0 OID 26242)
 -- Dependencies: 205
--- Data for Name: datasets; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: datasets; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.datasets (dataset_name, dataset_id) FROM stdin;
@@ -531,7 +531,7 @@ None	6adf97f83acf6453d4a6a4b1070f3754
 --
 -- TOC entry 3260 (class 0 OID 26290)
 -- Dependencies: 213
--- Data for Name: estimation_techniques; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: estimation_techniques; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.estimation_techniques (technique_name) FROM stdin;
@@ -544,7 +544,7 @@ Unreported
 --
 -- TOC entry 3250 (class 0 OID 26230)
 -- Dependencies: 203
--- Data for Name: extractions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: extractions; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.extractions (rct_name, extractor, extracted_data, extraction_done) FROM stdin;
@@ -820,7 +820,7 @@ Zhu 2018	initial	{"rct_name":"Zhu 2018","full_covidence_id":"154522/5440","covid
 --
 -- TOC entry 3257 (class 0 OID 26272)
 -- Dependencies: 210
--- Data for Name: journals; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: journals; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.journals (journal_name) FROM stdin;
@@ -842,7 +842,7 @@ NEJM
 --
 -- TOC entry 3259 (class 0 OID 26284)
 -- Dependencies: 212
--- Data for Name: populations; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: populations; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.populations (population_name) FROM stdin;
@@ -860,7 +860,7 @@ Other
 --
 -- TOC entry 3253 (class 0 OID 26248)
 -- Dependencies: 206
--- Data for Name: provenance; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: provenance; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.provenance (provenance_name) FROM stdin;
@@ -875,7 +875,7 @@ Unreported
 --
 -- TOC entry 3249 (class 0 OID 26224)
 -- Dependencies: 202
--- Data for Name: rcts; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: rcts; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.rcts (rct_name, pending_bskh, pending_rest, status, corresponding_author_name, corresponding_author_email, corresponding_author_first_contact, corresponding_author_second_contact, "stringsAsFactors") FROM stdin;
@@ -1151,7 +1151,7 @@ ATHOS-3 2017	1	1	0	\N	\N	\N	\N	f
 --
 -- TOC entry 3261 (class 0 OID 26296)
 -- Dependencies: 214
--- Data for Name: software_languages; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: software_languages; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.software_languages (language_name) FROM stdin;
@@ -1169,7 +1169,7 @@ Unreported
 --
 -- TOC entry 3262 (class 0 OID 26302)
 -- Dependencies: 215
--- Data for Name: software_libraries; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: software_libraries; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.software_libraries (library_name) FROM stdin;
@@ -1180,7 +1180,7 @@ None
 --
 -- TOC entry 3256 (class 0 OID 26266)
 -- Dependencies: 209
--- Data for Name: vocabs; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: vocabs; Type: TABLE DATA; Schema: public; Owner: shiny
 --
 
 COPY public.vocabs (vocab_name) FROM stdin;

@@ -25,7 +25,7 @@ server <- function(session, input, output) {
     conn <- make_conn()
 
     # LOGIC FOR DYNAMIC DROP-DOWN FIELDS
-    # Update list of causal inference methods
+    # Update causal inference methods and datasets in database
     for (cim in input$causal_inference_methods) {
       method_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(method_name) FROM causal_inference_methods WHERE method_name = '{cim}'"))
       if (isFALSE(method_exists)) {
@@ -41,7 +41,7 @@ server <- function(session, input, output) {
       }
     }
 
-    # Update data types
+    # Update
     update_db <- function(conn, regex, col_name, table_name) {
       input_as_list <- reactiveValuesToList(input)
       selected <- unlist(input_as_list[grepl(regex, names(input_as_list))])
@@ -69,8 +69,6 @@ server <- function(session, input, output) {
     update_db(conn, "dataset_id_.+__data_models", "data_model_name", "data_models")
     update_db(conn, "dataset_id_.+__vocabs", "vocab_name", "vocabs")
 
-    print(fromJSON(input_as_json))
-
     # Remove old versions, if they exist
     dbExecute(
       conn,
@@ -94,8 +92,7 @@ server <- function(session, input, output) {
     )
 
     # No longer pending
-    extractor_group <- if (EXTRACTOR() == "BSKH") "bskh" else "rest"
-    dbExecute(conn, glue("UPDATE rcts SET pending_{extractor_group} = 0 WHERE rct_name = '{input$rct_name}'"))
+    dbExecute(conn, glue("UPDATE rcts SET pending_{extractor_group()} = 0 WHERE rct_name = '{input$rct_name}'"))
 
     dbDisconnect(conn)
   }
@@ -105,6 +102,10 @@ server <- function(session, input, output) {
   EXTRACTOR <- reactive({
     # reactiveValuesToList(res_auth)$user
     "BSKH"
+  })
+
+  extractor_group <- reactive({
+    if (EXTRACTOR() == "BSKH") "bskh" else "rest"
   })
 
   defaults <- reactive({
@@ -232,10 +233,9 @@ server <- function(session, input, output) {
   output$rct_selector <- renderUI({
     req(input$rct_selector_kicker)
 
-    extractor_group <- if (EXTRACTOR() == "BSKH") "bskh" else "rest"
     conn <- make_conn()
     choices <- dbGetQuery(conn, glue(
-      "SELECT rct_name FROM rcts WHERE pending_{extractor_group} = 1
+      "SELECT rct_name FROM rcts WHERE pending_{extractor_group()} = 1
       UNION ALL
       SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0;"
     )) %>%
