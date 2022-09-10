@@ -33,7 +33,7 @@ CREATE TABLE public.causal_inference_methods (
 );
 
 
-ALTER TABLE public.causal_inference_methods OWNER TO pi;
+ALTER TABLE public.causal_inference_methods OWNER TO shiny;
 
 --
 -- TOC entry 211 (class 1259 OID 26278)
@@ -45,7 +45,7 @@ CREATE TABLE public.countries (
 );
 
 
-ALTER TABLE public.countries OWNER TO pi;
+ALTER TABLE public.countries OWNER TO shiny;
 
 --
 -- TOC entry 208 (class 1259 OID 26260)
@@ -57,7 +57,7 @@ CREATE TABLE public.data_models (
 );
 
 
-ALTER TABLE public.data_models OWNER TO pi;
+ALTER TABLE public.data_models OWNER TO shiny;
 
 --
 -- TOC entry 207 (class 1259 OID 26254)
@@ -69,7 +69,7 @@ CREATE TABLE public.data_types (
 );
 
 
-ALTER TABLE public.data_types OWNER TO pi;
+ALTER TABLE public.data_types OWNER TO shiny;
 
 --
 -- TOC entry 205 (class 1259 OID 26242)
@@ -82,7 +82,7 @@ CREATE TABLE public.datasets (
 );
 
 
-ALTER TABLE public.datasets OWNER TO pi;
+ALTER TABLE public.datasets OWNER TO shiny;
 
 --
 -- TOC entry 213 (class 1259 OID 26290)
@@ -94,7 +94,7 @@ CREATE TABLE public.estimation_techniques (
 );
 
 
-ALTER TABLE public.estimation_techniques OWNER TO pi;
+ALTER TABLE public.estimation_techniques OWNER TO shiny;
 
 --
 -- TOC entry 203 (class 1259 OID 26230)
@@ -109,7 +109,7 @@ CREATE TABLE public.extractions (
 );
 
 
-ALTER TABLE public.extractions OWNER TO pi;
+ALTER TABLE public.extractions OWNER TO shiny;
 
 --
 -- TOC entry 210 (class 1259 OID 26272)
@@ -121,7 +121,7 @@ CREATE TABLE public.journals (
 );
 
 
-ALTER TABLE public.journals OWNER TO pi;
+ALTER TABLE public.journals OWNER TO shiny;
 
 --
 -- TOC entry 212 (class 1259 OID 26284)
@@ -133,7 +133,7 @@ CREATE TABLE public.populations (
 );
 
 
-ALTER TABLE public.populations OWNER TO pi;
+ALTER TABLE public.populations OWNER TO shiny;
 
 --
 -- TOC entry 206 (class 1259 OID 26248)
@@ -145,7 +145,7 @@ CREATE TABLE public.provenance (
 );
 
 
-ALTER TABLE public.provenance OWNER TO pi;
+ALTER TABLE public.provenance OWNER TO shiny;
 
 --
 -- TOC entry 202 (class 1259 OID 26224)
@@ -165,7 +165,7 @@ CREATE TABLE public.rcts (
 );
 
 
-ALTER TABLE public.rcts OWNER TO pi;
+ALTER TABLE public.rcts OWNER TO shiny;
 
 --
 -- TOC entry 214 (class 1259 OID 26296)
@@ -177,7 +177,7 @@ CREATE TABLE public.software_languages (
 );
 
 
-ALTER TABLE public.software_languages OWNER TO pi;
+ALTER TABLE public.software_languages OWNER TO shiny;
 
 --
 -- TOC entry 215 (class 1259 OID 26302)
@@ -189,7 +189,7 @@ CREATE TABLE public.software_libraries (
 );
 
 
-ALTER TABLE public.software_libraries OWNER TO pi;
+ALTER TABLE public.software_libraries OWNER TO shiny;
 
 --
 -- TOC entry 209 (class 1259 OID 26266)
@@ -201,7 +201,7 @@ CREATE TABLE public.vocabs (
 );
 
 
-ALTER TABLE public.vocabs OWNER TO pi;
+ALTER TABLE public.vocabs OWNER TO shiny;
 
 --
 -- TOC entry 3251 (class 0 OID 26236)
