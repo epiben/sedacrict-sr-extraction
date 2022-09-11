@@ -14,7 +14,16 @@ server <- function(session, input, output) {
 
   # HELPERS ====
 
-  make_conn <- function() dbConnect(RPostgres::Postgres(), "sedacrict_sr_extraction")
+  make_conn <- function() {
+    dbConnect(
+      drv = RPostgres::Postgres(),
+      host = "database",
+      user = "shiny",
+      pass = "causalforlife",
+      port = 5432,
+      dbname = "sedacrict_sr_extraction",
+    )
+  }
 
   fetch_choices <- function(conn, col_name, table_name) {
     dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name} ORDER BY {col_name}")) %>%
