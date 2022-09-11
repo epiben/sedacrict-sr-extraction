@@ -25,7 +25,7 @@ credentials <- data.frame(
 )
 
 # Fixed choice lists
-intervention_types <- list("Drug", "Medical device", "Management")
+intervention_types <- list("Drug", "Device", "Management")
 yes_no_choices <- list("No", "Yes")
 
 
