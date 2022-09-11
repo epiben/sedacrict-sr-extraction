@@ -21,7 +21,7 @@ body <- dashboardBody(
         uiOutput("rct_selector")
       ),
       column(width = 2,
-        actionButton("submit", "Submit", style = "background-color:green; color:white", width = "100%"),
+        hidden(actionButton("submit", "Submit", style = "background-color:green; color:white", width = "100%")),
 
         hidden(
           span(id = "submit_msg", "Submitting..."),
@@ -31,10 +31,10 @@ body <- dashboardBody(
         )
       ),
       column(width = 2,
-        actionButton("save", "Save", style = "background-color:grey; color:white", width = "100%")
+        hidden(actionButton("save", "Save", style = "background-color:grey; color:white", width = "100%"))
       ),
       column(width = 2,
-        actionButton("cancel", "Cancel", style = "background-color:red; color:white", width = "100%")
+        hidden(actionButton("cancel", "Cancel", style = "background-color:red; color:white", width = "100%"))
       )
     ),
 

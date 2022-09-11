@@ -228,6 +228,18 @@ server <- function(session, input, output) {
     }
   })
 
+  observeEvent(input$rct_name, {
+    if (length(input$rct_name) == 0 | input$rct_name == "") {
+      shinyjs::hide("submit")
+      shinyjs::hide("save")
+      shinyjs::hide("cancel")
+    } else {
+      shinyjs::show("submit")
+      shinyjs::show("save")
+      shinyjs::show("cancel")
+    }
+  })
+
 	# REACTIVE DATA ELEMENTS ====
 
   output$rct_selector <- renderUI({
@@ -355,17 +367,21 @@ server <- function(session, input, output) {
 
 	  set_up_fields <- function(d) {
 	    id_prefix <- sprintf("dataset_id_%s__", md5(d, key = "4131"))
-	    box(width = 6,
+	    box(width = 12,
 	        h4(d, style = "color:dodgerblue"),
 	        hidden(textInput(paste0(id_prefix, "name"), label = NULL, value = d)),
-	        selectizeInput(paste0(id_prefix, "countries"), "Country/ies of origin", selected = defaults()[[paste0(id_prefix, "countries")]], choices = countries, multiple = TRUE, options = list(create = TRUE)),
-	        textInput(paste0(id_prefix, "n_subjects"), "No. subjects", value = defaults()[[paste0(id_prefix, "n_subjects")]], width = "100%"), # TODO: consider validation (validate()/need())
-	        selectizeInput(paste0(id_prefix, "populations"), "Patient population", choices = populations, selected = defaults()[[paste0(id_prefix, "populations")]], multiple = TRUE, options = list(create = TRUE)),
-	        selectizeInput(paste0(id_prefix, "provenance"), "Provenance", choices = provenance, selected = defaults()[[paste0(id_prefix, "provenance")]], multiple = TRUE, options = list(create = TRUE)),
-	        selectizeInput(paste0(id_prefix, "data_types"), "Data types", choices = data_types, selected = defaults()[[paste0(id_prefix, "data_types")]], multiple = TRUE, options = list(create = TRUE)),
-	        selectizeInput(paste0(id_prefix, "data_models"), "Data model(s)", choices = data_models, selected = defaults()[[paste0(id_prefix, "data_models")]], multiple = TRUE, options = list(create = TRUE)),
-	        selectizeInput(paste0(id_prefix, "vocabs"), "Vocabularies/ontologies", choices = vocabs, selected = defaults()[[paste0(id_prefix, "vocabs")]], multiple = TRUE, options = list(create = TRUE)),
-	        radioButtons(paste0(id_prefix, "data_are_public"), "Are data publicly available?", choices = yes_no_choices, selected = defaults()[[paste0(id_prefix, "data_are_public")]] %||% character(0))
+	        column(6,
+  	        selectizeInput(paste0(id_prefix, "countries"), "Country/ies of origin", selected = defaults()[[paste0(id_prefix, "countries")]], choices = countries, multiple = TRUE, options = list(create = TRUE)),
+  	        textInput(paste0(id_prefix, "n_subjects"), "No. subjects", value = defaults()[[paste0(id_prefix, "n_subjects")]], width = "100%"), # TODO: consider validation (validate()/need())
+  	        selectizeInput(paste0(id_prefix, "populations"), "Patient population", choices = populations, selected = defaults()[[paste0(id_prefix, "populations")]], multiple = TRUE, options = list(create = TRUE)),
+  	        selectizeInput(paste0(id_prefix, "provenance"), "Provenance", choices = provenance, selected = defaults()[[paste0(id_prefix, "provenance")]], multiple = TRUE, options = list(create = TRUE))
+	        ),
+	        column(6,
+  	        selectizeInput(paste0(id_prefix, "data_types"), "Data types", choices = data_types, selected = defaults()[[paste0(id_prefix, "data_types")]], multiple = TRUE, options = list(create = TRUE)),
+  	        selectizeInput(paste0(id_prefix, "data_models"), "Data model(s)", choices = data_models, selected = defaults()[[paste0(id_prefix, "data_models")]], multiple = TRUE, options = list(create = TRUE)),
+  	        selectizeInput(paste0(id_prefix, "vocabs"), "Vocabularies/ontologies", choices = vocabs, selected = defaults()[[paste0(id_prefix, "vocabs")]], multiple = TRUE, options = list(create = TRUE)),
+  	        radioButtons(paste0(id_prefix, "data_are_public"), "Are data publicly available?", choices = yes_no_choices, selected = defaults()[[paste0(id_prefix, "data_are_public")]] %||% character(0))
+	        )
 	    )
 	  }
 
