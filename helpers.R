@@ -12,16 +12,7 @@ library(RPostgres)
 library(stringr)
 library(glue)
 
-# define some credentials
-credentials <- data.frame(
-  user = c("BSKH", "JM"), # mandatory
-  password = c("4131bskh", "4131jm"), # mandatory
-  start = c("2019-04-15"), # optional (all others)
-  # expire = c(NA, "2019-12-31"),
-  admin = c(TRUE, TRUE),
-  comment = "None",
-  stringsAsFactors = FALSE
-)
+credentials <- read_tsv("internal/login_details.tsv")
 
 # Fixed choice lists
 intervention_types <- list("Drug", "Device", "Management")
