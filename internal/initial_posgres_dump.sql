@@ -23,6 +23,26 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- CLEAN UP DATABASE = REMOVE EXISTING DATABASEN IF THEY EXIST
+--
+
+DROP TABLE IF EXISTS public.causal_inference_methods;
+DROP TABLE IF EXISTS public.countries;
+DROP TABLE IF EXISTS public.data_models;
+DROP TABLE IF EXISTS public.data_types;
+DROP TABLE IF EXISTS public.datasets;
+DROP TABLE IF EXISTS public.estimation_techniques;
+DROP TABLE IF EXISTS public.extractions;
+DROP TABLE IF EXISTS public.journals;
+DROP TABLE IF EXISTS public.populations;
+DROP TABLE IF EXISTS public.provenance;
+DROP TABLE IF EXISTS public.rcts;
+DROP TABLE IF EXISTS public.software_languages;
+DROP TABLE IF EXISTS public.software_libraries;
+DROP TABLE IF EXISTS public.vocabs;
+
+
+--
 -- TOC entry 204 (class 1259 OID 26236)
 -- Name: causal_inference_methods; Type: TABLE; Schema: public; Owner: shiny
 --
