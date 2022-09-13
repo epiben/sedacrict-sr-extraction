@@ -4,9 +4,6 @@ server <- function(session, input, output) {
 
   # call the server part
   # check_credentials returns a function to authenticate users
-  credentials <- read_tsv("internal/login_details.tsv")
-  print(credentials)
-
   res_auth <- secure_server(
     check_credentials <- check_credentials(credentials)
   )
