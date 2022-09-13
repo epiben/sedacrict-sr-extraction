@@ -12,8 +12,7 @@ library(RPostgres)
 library(stringr)
 library(glue)
 
-credentials <- read.csv2("internal/login_details.tsv", stringsAsFactors = FALSE)
-message(credentials)
+credentials <- read.csv("internal/login_details.csv", stringsAsFactors = FALSE)
 
 # Fixed choice lists
 intervention_types <- list("Drug", "Device", "Management")
