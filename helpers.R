@@ -12,8 +12,6 @@ library(RPostgres)
 library(stringr)
 library(glue)
 
-credentials <- read_tsv("internal/login_details.tsv")
-
 # Fixed choice lists
 intervention_types <- list("Drug", "Device", "Management")
 yes_no_choices <- list("No", "Yes")
