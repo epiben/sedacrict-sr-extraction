@@ -218,6 +218,8 @@ server <- function(session, input, output) {
     reset("form")
   })
 
+  # OBSERVERS ====
+
   observeEvent(input$open_covidence, {
     shinyjs::runjs(glue("window.open('{defaults()$covidence_link}', '_blank')"))
   })
@@ -246,6 +248,14 @@ server <- function(session, input, output) {
       shinyjs::show("submit")
       shinyjs::show("save")
       shinyjs::show("cancel")
+    }
+  })
+
+  observeEvent(input$causal_inference_methods, {
+    if ("None" %in% input$causal_inference_methods) {
+      conn <- make_conn()
+      updateSelectizeInput(session, "dataset_names", choices = fetch_choices(conn, "dataset_name", "datasets"), selected = "None")
+      dbDisconnect(conn)
     }
   })
 
