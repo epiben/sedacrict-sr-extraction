@@ -298,7 +298,7 @@ server <- function(session, input, output) {
       fluidRow(
         box(width = 6,
           textInput("doi_principal_report", "DOI of principal report", width = "100%", value = defaults()$doi_principal_report),
-          selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = journals, selected = defaults()$journal_principal_report %||% character(0), options = list(create = TRUE)),
+          selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = c("", journals), selected = defaults()$journal_principal_report %||% character(0), options = list(create = TRUE)),
           textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
           textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
           textInput("n_enrolled_participants", "No. enrolled participants", width = "100%", value = defaults()$n_enrolled_participants), # TODO: consider validation (validate()/need())
