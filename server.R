@@ -26,8 +26,9 @@ server <- function(session, input, output) {
   }
 
   fetch_choices <- function(conn, col_name, table_name) {
-    dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name} ORDER BY {col_name}")) %>%
+    out <- dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name} ORDER BY {col_name}")) %>%
       unlist(use.names = FALSE)
+    c(out[out == "None"], out[out != "None"]) # ensure alphabetical order, but None at the top
   }
 
   save_data <- function(input_as_json, extraction_done = 0) {
