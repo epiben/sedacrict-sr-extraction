@@ -32,6 +32,10 @@ server <- function(session, input, output) {
     top_idx <- out %in% c("None")
     c(out[top_idx], out[!top_idx]) # ensure alphabetical order, but None at the top
   }
+
+  make_links <- function(urls) {
+    str_split(urls, pattern = ", ")[[1]] %>%
+      map(~ tagList(br(), if (grepl("^http", .)) { a(., href = ., target = "_blank") } else { . }))
   }
 
   save_data <- function(input_as_json, extraction_done = 0) {
@@ -294,10 +298,16 @@ server <- function(session, input, output) {
     dbDisconnect(conn)
 
     tagList(
-      fluidRow(column(12,
-        hidden(textInput("covidence_link", label = NULL, value = defaults()$covidence_link)),
-        actionButton("open_covidence", "Click here to open Covidence record", style = "background-color:dodgerblue; color:white", width = "100%")
-      )),
+      fluidRow(
+        column(6,
+          strong("Links to trial repositories:", ),
+          make_links(defaults()$accession_urls)
+        ),
+        column(6,
+          hidden(textInput("covidence_link", label = NULL, value = defaults()$covidence_link)),
+          actionButton("open_covidence", "Click here to open Covidence record", style = "background-color:dodgerblue; color:white", width = "100%")
+        )
+      ),
       fluidRow(br()),
       fluidRow(
         box(width = 6,
