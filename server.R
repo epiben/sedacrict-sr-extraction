@@ -298,6 +298,30 @@ server <- function(session, input, output) {
     dbDisconnect(conn)
 
     tagList(
+      # Help texts
+      bsPopover(
+        "recruitment_period", NULL,
+        paste("Write 0 for missing month and 0000 for missing year.<br> If unavailable in ",
+              "the principal report, it can often be found in the repository where the trial was registered.")
+      ),
+      bsPopover(
+        "trial_phase", NULL,
+        paste("Often available via e.g. ClinicalTrials.gov.<br> If not, make your best",
+              "judgement as per e.g. <a href=\"https://en.wikipedia.org/wiki/Drug_development#Clinical_phase\" ",
+              "target=\"_blank\">this overview</a>"),
+        placement = "top",
+        trigger = "focus"
+      ),
+      bsPopover(
+        "causal_inference_methods", NULL,
+        paste("NB! For predictive enrichment only. Simple sample-size estimation doesn't count.",
+              "From the protocol: generalised linear model [although not strictly as causal",
+              "inference method in itself], propensity-score based, stratification-score based, ",
+              "hierarchical modelling, counterfactuals-as-missing, pre-specified DAG, ",
+              "causal discovery, causal structure learning"),
+        placement = "top"
+      ),
+
       fluidRow(
         column(6,
           strong("Links to trial repositories:", ),
