@@ -6,8 +6,13 @@ body <- dashboardBody(
 
   hidden(div(
     id = "thankyou_msg",
-    h3("Thanks, your response was submitted successfully!"),
-    actionLink("submit_another", "Submit another response")
+    h3("Extraction submitted successfully!"),
+    actionLink("submit_another", "Click here to continue extracting.")
+  )),
+
+  hidden(div(
+    id = "logged_in_as_final",
+    h3("Logged in as FINAL user!", style = "color:red"),
   )),
 
   div(
