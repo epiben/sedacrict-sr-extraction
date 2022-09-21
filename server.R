@@ -280,6 +280,7 @@ server <- function(session, input, output) {
     )) %>%
       arrange(rct_name) %>%
       unlist(use.names = FALSE) %>%
+      sample() %>% # minimise risk of several extractors "claiming" the same RCT
       c("", .)
     dbDisconnect(conn)
 
