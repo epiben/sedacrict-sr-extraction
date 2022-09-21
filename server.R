@@ -46,7 +46,7 @@ server <- function(session, input, output) {
     for (cim in input$causal_inference_methods) {
       method_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(method_name) FROM causal_inference_methods WHERE method_name = '{cim}'"))
       if (isFALSE(method_exists)) {
-        dbExecute(conn, glue("INSERT INTO causal_inference_methods VALUES ('{cim}', '{md5(cim)}')"))
+        dbExecute(conn, glue("INSERT INTO causal_inference_methods VALUES ('{cim}', '{md5(cim, key = '4131')}')"))
       }
     }
 
@@ -54,7 +54,7 @@ server <- function(session, input, output) {
     for (dsn in input$dataset_names) {
       dataset_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(dataset_name) FROM datasets WHERE dataset_name = '{dsn}'"))
       if (isFALSE(dataset_exists)) {
-        dbExecute(conn, glue("INSERT INTO datasets VALUES ('{dsn}', '{md5(dsn)}')"))
+        dbExecute(conn, glue("INSERT INTO datasets VALUES ('{dsn}', '{md5(dsn, key = '4131')}')"))
       }
     }
 
@@ -165,13 +165,13 @@ server <- function(session, input, output) {
       input_as_list$causal_inference_methods <- "None"
     }
     ci_items_to_remove <- str_extract(names(input_as_list), "cim_id_.+") %>%
-      map_lgl(~ any(str_detect(., paste(md5(input$causal_inference_methods %||% "")), negate = TRUE)))
+      map_lgl(~ any(str_detect(., paste(md5(input$causal_inference_methods %||% "", key = "4131")), negate = TRUE)))
 
     if ("None" %in% input_as_list$dataset_names) {
       input_as_list$dataset_names <- "None"
     }
     dataset_items_to_remove <- str_extract(names(input_as_list), "dataset_id_.+") %>%
-      map_lgl(~ any(str_detect(., paste(md5(input$dataset_names %||% "")), negate = TRUE)))
+      map_lgl(~ any(str_detect(., paste(md5(input$dataset_names %||% "", key = "4131")), negate = TRUE)))
 
     items_to_remove <- c(shiny_items_to_remove, ci_items_to_remove, dataset_items_to_remove)
     idx_to_remove <- names(input_as_list) %in% items_to_remove
