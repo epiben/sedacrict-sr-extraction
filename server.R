@@ -34,7 +34,8 @@ server <- function(session, input, output) {
   }
 
   make_links <- function(urls) {
-    str_split(urls, pattern = ", ")[[1]] %>%
+    strsplit(urls %||% "", ", ") %>%
+      unlist() %>%
       map(~ tagList(br(), if (grepl("^http", .)) { a(., href = ., target = "_blank") } else { . }))
   }
 
