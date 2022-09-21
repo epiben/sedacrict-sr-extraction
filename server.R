@@ -17,9 +17,8 @@ server <- function(session, input, output) {
   make_conn <- function() {
     dbConnect(
       drv = RPostgres::Postgres(),
-      host = "database",
-      user = "shiny",
-      pass = "causalforlife",
+      user = Sys.getenv("DBUSER"),
+      pass = Sys.getenv("DBPASS"),
       port = 5432,
       dbname = "sedacrict_sr_extraction",
     )
@@ -119,7 +118,6 @@ server <- function(session, input, output) {
 
   EXTRACTOR <- reactive({
     reactiveValuesToList(res_auth)$user
-    # "BSKH"
   })
 
   extractor_group <- reactive({

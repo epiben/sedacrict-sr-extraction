@@ -49,5 +49,3 @@ ui <- dashboardPage(
 )
 
 secure_app(ui)
-# ui
-
