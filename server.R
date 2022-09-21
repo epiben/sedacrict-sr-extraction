@@ -118,7 +118,7 @@ server <- function(session, input, output) {
   # REACTIVE DATA OBJECTS ====
 
   EXTRACTOR <- reactive({
-    reactiveValuesToList(res_auth)$user
+    reactiveValuesToList(res_auth)$user %||% "BSKH"
   })
 
   extractor_group <- reactive({
