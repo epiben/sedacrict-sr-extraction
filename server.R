@@ -355,7 +355,7 @@ server <- function(session, input, output) {
         ),
         box(width = 6,
           radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
-          hidden(textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III")),
+          textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III"),
           radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
           radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
           hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason, placeholder = "E.g. futility or superiority")),
