@@ -17,6 +17,7 @@ server <- function(session, input, output) {
   make_conn <- function() {
     dbConnect(
       drv = RPostgres::Postgres(),
+      host = Sys.getenv("DBHOST"),
       user = Sys.getenv("DBUSER"),
       pass = Sys.getenv("DBPASS"),
       port = 5432,
