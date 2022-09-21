@@ -270,8 +270,10 @@ server <- function(session, input, output) {
 
   observeEvent(input$intervention_type, {
     if (input$intervention_type == "Drug") {
+      updateTextInput(session, "trial_phase", value = "")
       shinyjs::show("trial_phase")
     } else {
+      updateTextInput(session, "trial_phase", value = "N/A")
       shinyjs::hide("trial_phase")
     }
   })
