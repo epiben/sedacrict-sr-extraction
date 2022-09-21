@@ -396,8 +396,8 @@ server <- function(session, input, output) {
           textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. 2a og 3"),
           radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
           radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
-          hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason, placeholder = "E.g. futility or superiority")),
-          hidden(radioButtons("trial_stopped_predefined_rule", "Terminated using predefined rule?", choices = yes_no_choices, selected = defaults()$trial_stopped_predefined_rule %||% character(0))),
+          hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason %||% "N/A", placeholder = "E.g. futility or superiority")),
+          hidden(radioButtons("trial_stopped_predefined_rule", "Terminated using predefined rule?", choices = yes_no_choices, selected = defaults()$trial_stopped_predefined_rule %||% "No")),
           textAreaInput("remarks", "Remarks", value = defaults()$remarks, width = "100%", rows = 2)
         )
       ),
