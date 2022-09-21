@@ -277,6 +277,14 @@ server <- function(session, input, output) {
     }
   })
 
+  observeEvent(EXTRACTOR(), {
+    if (EXTRACTOR() == "FINAL") {
+      shinyjs::show("logged_in_as_final")
+    } else {
+      shinyjs::hide("logged_in_as_final")
+    }
+  })
+
 	# REACTIVE DATA ELEMENTS ====
 
   output$rct_selector <- renderUI({
