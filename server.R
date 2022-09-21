@@ -39,7 +39,7 @@ server <- function(session, input, output) {
       map(~ tagList(br(), if (grepl("^http", .)) { a(., href = ., target = "_blank") } else { . }))
   }
 
-  save_data <- function(input_as_json, extraction_done = 0) {
+  save_data <- function(pruned_data, extraction_done = 0) {
     conn <- make_conn()
 
     # LOGIC FOR DYNAMIC DROP-DOWN FIELDS
@@ -51,7 +51,6 @@ server <- function(session, input, output) {
       }
     }
 
-    # Update datasets
     for (dsn in input$dataset_names) {
       dataset_exists <- 1 == dbGetQuery(conn, glue("SELECT COUNT(dataset_name) FROM datasets WHERE dataset_name = '{dsn}'"))
       if (isFALSE(dataset_exists)) {
@@ -59,7 +58,7 @@ server <- function(session, input, output) {
       }
     }
 
-    # Update
+    # Update database with remaining dynamic drop-down options
     update_db <- function(conn, regex, col_name, table_name) {
       input_as_list <- reactiveValuesToList(input)
       selected <- unlist(input_as_list[grepl(regex, names(input_as_list))])
@@ -103,7 +102,7 @@ server <- function(session, input, output) {
       tibble(
         rct_name = input$rct_name,
         extractor = EXTRACTOR(),
-        extracted_data = input_as_json,
+        extracted_data = toJSON(pruned_data),
         extraction_done = extraction_done
       ),
       append = TRUE
@@ -115,6 +114,11 @@ server <- function(session, input, output) {
     dbDisconnect(conn)
   }
 
+  ascertain_required_fields <- function(pruned_input) {
+    exempt_idx <- names(pruned_input) == "remarks"
+    all(map_lgl(pruned_input[!exempt_idx], ~ nchar(.) > 0 & !is.null(.)))
+  }
+
   # REACTIVE DATA OBJECTS ====
 
   EXTRACTOR <- reactive({
@@ -122,7 +126,12 @@ server <- function(session, input, output) {
   })
 
   extractor_group <- reactive({
-    if (EXTRACTOR() == "BSKH") "bskh" else "rest"
+    switch(
+      EXTRACTOR(),
+      "BSKH" = "bskh",
+      "FINAL" = "final",
+      "rest"
+    )
   })
 
   defaults <- reactive({
@@ -151,29 +160,36 @@ server <- function(session, input, output) {
     tryCatch(fromJSON(as.character(res)), error = function(err) list())
   })
 
-  pruned_data_as_json <- reactive({
+  pruned_data <- reactive({
     shiny_items_to_remove <- c(
       "sidebarItemExpanded",
       "sidebarCollapsed",
       "shinyjs-resettable-form",
-      "cancel"
+      "cancel",
+      "open_covidence",
+      "rct_selector_kicker",
+      "save",
+      "shinymanager_language",
+      "shinymanager_where",
+      "submit",
+      "submit_another"
     )
 
     input_as_list <- reactiveValuesToList(input)
 
-    if ("None" %in% input_as_list$causal_inference_methods) {
-      input_as_list$causal_inference_methods <- "None"
-    }
-    ci_items_to_remove <- str_extract(names(input_as_list), "cim_id_.+") %>%
-      map_lgl(~ any(str_detect(., paste(md5(input$causal_inference_methods %||% "", key = "4131")), negate = TRUE)))
+    if ("None" %in% input_as_list$causal_inference_methods) input_as_list$causal_inference_methods <- "None"
+    ci_idx_to_remove <- str_extract(names(input_as_list), "cim_id_.+") %>%
+      str_which(paste(md5(input$causal_inference_methods %||% "", key = "4131")), negate = TRUE)
 
-    if ("None" %in% input_as_list$dataset_names) {
-      input_as_list$dataset_names <- "None"
-    }
-    dataset_items_to_remove <- str_extract(names(input_as_list), "dataset_id_.+") %>%
-      map_lgl(~ any(str_detect(., paste(md5(input$dataset_names %||% "", key = "4131")), negate = TRUE)))
+    if ("None" %in% input_as_list$dataset_names) input_as_list$dataset_names <- "None"
+    dataset_idx_to_remove <- str_extract(names(input_as_list), "dataset_id_.+") %>%
+      str_which(paste(md5(input$dataset_names %||% "", key = "4131")), negate = TRUE)
 
-    items_to_remove <- c(shiny_items_to_remove, ci_items_to_remove, dataset_items_to_remove)
+    items_to_remove <- c(
+      shiny_items_to_remove,
+      names(input_as_list)[ci_idx_to_remove],
+      names(input_as_list)[dataset_idx_to_remove]
+    )
     idx_to_remove <- names(input_as_list) %in% items_to_remove
     ordered_names <- sort(names(input_as_list[!idx_to_remove]))
     final_data <- input_as_list[ordered_names]
@@ -182,11 +198,24 @@ server <- function(session, input, output) {
     final_data$timestamp <- paste(now("UTC"), "UTC")
     final_data$extractor <- EXTRACTOR()
 
-    toJSON(final_data)
+    final_data
   })
 
   # SAVING AND SUBMISSION LOGIC ====
   observeEvent(input$submit, {
+
+    if (isFALSE(ascertain_required_fields(pruned_data()))) {
+      showModal(
+        modalDialog(
+          title = "Mandatory field(s) missing",
+          "At least one mandatory field has no value. ",
+          "If this is a bug, hit Save and throw Ben an email with the RCT name.",
+          easyClose = TRUE,
+          label = "Got it!"
+        )
+      )
+      return(NULL)
+    }
 
     # User-experience stuff
     shinyjs::disable("submit")
@@ -194,7 +223,7 @@ server <- function(session, input, output) {
     shinyjs::hide("error")
 
     tryCatch({
-      save_data(pruned_data_as_json(), extraction_done = 1)
+      save_data(pruned_data(), extraction_done = 1)
       shinyjs::reset("form")
       shinyjs::show("thankyou_msg")
       shinyjs::hide("form")
@@ -218,7 +247,7 @@ server <- function(session, input, output) {
 
   observeEvent(input$save, {
     updateTextInput(session, "rct_selector_kicker", value = now())
-    save_data(pruned_data_as_json())
+    save_data(pruned_data())
   })
 
   observeEvent(input$cancel, {
@@ -238,12 +267,13 @@ server <- function(session, input, output) {
       shinyjs::show("trial_stopped_predefined_rule")
       if (input$trial_stopped_reason == "N/A") {
         updateTextInput(session, "trial_stopped_reason", value = "")
+        updateRadioButtons(session, "trial_stopped_predefined_rule", choices = yes_no_choices, selected = character(0))
       }
     } else {
       shinyjs::hide("trial_stopped_reason")
       shinyjs::hide("trial_stopped_predefined_rule")
       updateTextInput(session, "trial_stopped_reason", value = "N/A")
-      updateRadioButtons(session, "trial_stopped_reason", choices = yes_no_choices, selected = character(0))
+      updateRadioButtons(session, "trial_stopped_predefined_rule", choices = "N/A", selected = "N/A")
     }
   })
 
@@ -269,7 +299,7 @@ server <- function(session, input, output) {
 
   observeEvent(input$intervention_type, {
     if (input$intervention_type == "Drug") {
-      updateTextInput(session, "trial_phase", value = defaults()$trial_phase)
+      updateTextInput(session, "trial_phase", value = replace_na(defaults()$trial_phase, ""))
       shinyjs::show("trial_phase")
     } else {
       updateTextInput(session, "trial_phase", value = "N/A")
@@ -363,7 +393,7 @@ server <- function(session, input, output) {
         ),
         box(width = 6,
           radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
-          textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III"),
+          textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. 2a og 3"),
           radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
           radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
           hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason, placeholder = "E.g. futility or superiority")),
