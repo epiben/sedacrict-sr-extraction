@@ -116,7 +116,7 @@ server <- function(session, input, output) {
 
   ascertain_required_fields <- function(pruned_input) {
     exempt_idx <- names(pruned_input) == "remarks"
-    all(map_lgl(pruned_input[!exempt_idx], ~ nchar(.) > 0 & !is.null(.)))
+    all(map_lgl(pruned_input[!exempt_idx], ~ isTRUE(nchar(.) > 0 & !is.null(.))))
   }
 
   # REACTIVE DATA OBJECTS ====
