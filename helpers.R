@@ -11,6 +11,7 @@ library(openssl)
 library(RPostgres)
 library(stringr)
 library(glue)
+library(shinyBS)
 
 credentials <- read.csv("internal/login_details.csv", stringsAsFactors = FALSE)
 
