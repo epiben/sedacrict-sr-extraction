@@ -348,7 +348,7 @@ server <- function(session, input, output) {
           selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = c("", journals), selected = defaults()$journal_principal_report %||% character(0), options = list(create = TRUE)),
           textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
           textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
-          textInput("n_enrolled_participants", "No. enrolled participants", width = "100%", value = defaults()$n_enrolled_participants), # TODO: consider validation (validate()/need())
+          textInput("n_randomised_participants", "No. randomised participants", width = "100%", value = defaults()$n_randomised_participants), # TODO: consider validation (validate()/need())
           textInput("n_centres", "No. centres", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
         ),
         box(width = 6,
