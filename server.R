@@ -355,7 +355,6 @@ server <- function(session, input, output) {
           textInput("n_centres", "No. centres", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
         ),
         box(width = 6,
-          textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III"),
           radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
           hidden(textInput("trial_phase", "Phase of trial", value = defaults()$trial_phase, placeholder = "E.g. IIa og III")),
           radioButtons("only_covid_patients", "Trial restricted to COVID19 patients?", choices = yes_no_choices, selected = defaults()$only_covid_patients %||% character(0)),
