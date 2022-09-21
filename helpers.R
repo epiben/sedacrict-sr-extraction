@@ -19,5 +19,10 @@ credentials <- read.csv("internal/login_details.csv", stringsAsFactors = FALSE)
 intervention_types <- list("Drug", "Device", "Management")
 yes_no_choices <- list("No", "Yes")
 
+replace_na <- function(x, replace = NA) {
+  x[is.na(x)] <- replace
+  x
+}
+
 
 
