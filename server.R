@@ -126,7 +126,12 @@ server <- function(session, input, output) {
   })
 
   extractor_group <- reactive({
-    if (EXTRACTOR() == "BSKH") "bskh" else "rest"
+    switch(
+      EXTRACTOR(),
+      "BSKH" = "bskh",
+      "FINAL" = "final",
+      "rest"
+    )
   })
 
   defaults <- reactive({

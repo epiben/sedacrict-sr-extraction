@@ -5,14 +5,14 @@ body <- dashboardBody(
   useShinyjs(), # initialise shinyjs to enable its features
 
   hidden(div(
-    id = "thankyou_msg",
-    h3("Extraction submitted successfully!"),
-    actionLink("submit_another", "Click here to continue extracting.")
+    id = "logged_in_as_final",
+    h4("Logged in as FINAL user!", style = "color:red"),
   )),
 
   hidden(div(
-    id = "logged_in_as_final",
-    h3("Logged in as FINAL user!", style = "color:red"),
+    id = "thankyou_msg",
+    h4("Extraction submitted successfully!"),
+    actionLink("submit_another", "Click here to extract another.")
   )),
 
   div(
