@@ -116,10 +116,10 @@ server <- function(session, input, output) {
 
   ascertain_required_fields <- function(pruned_input) {
     message(now())
-    print(pruned_input)
+    message(pruned_input)
     exempt_idx <- names(pruned_input) == "remarks"
     tests <- map_lgl(pruned_input[!exempt_idx], ~ isTRUE(nchar(.) > 0 & !is.null(.)))
-    print(tests)
+    message(tests)
     all(tests)
   }
 
