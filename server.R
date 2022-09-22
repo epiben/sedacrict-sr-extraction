@@ -307,6 +307,31 @@ server <- function(session, input, output) {
     }
   })
 
+  observeEvent(input$recruitment_period, {
+    period_regex <- "^([0-9]|1[0-2])/(0000|19[0-9][0-9]|20[0-1][0-9]|202[0-2])-([0-9]|1[0-2])/(0000|19[0-9][0-9]|20[0-1][0-9]|202[0-2])$"
+    if(!grepl(period_regex, input$recruitment_period) & isTRUE(nchar(input$recruitment_period) > 0)) {
+      updateTextInput(session, "recruitment_period", label = "Recruitment period - INVALID FORMAT")
+    } else {
+      updateTextInput(session, "recruitment_period", label = "Recruitment period")
+    }
+  })
+
+  observeEvent(input$n_randomised_participants, {
+    if(!grepl("^\\d+$", input$n_randomised_participants) & isTRUE(nchar(input$n_randomised_participants) > 0)) {
+      updateTextInput(session, "n_randomised_participants", label = "No. randomised participants - INVALID FORMAT")
+    } else {
+      updateTextInput(session, "n_randomised_participants", label = "No. randomised participants")
+    }
+  })
+
+  observeEvent(input$n_centres, {
+    if(!grepl("^\\d+$", input$n_centres) & isTRUE(nchar(input$n_centres) > 0)) {
+      updateTextInput(session, "n_centres", label = "No. centres/sites - INVALID FORMAT")
+    } else {
+      updateTextInput(session, "n_centres", label = "No. centres/sites")
+    }
+  })
+
   observeEvent(EXTRACTOR(), {
     if (EXTRACTOR() == "FINAL") {
       shinyjs::show("logged_in_as_final")
@@ -389,7 +414,7 @@ server <- function(session, input, output) {
           textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
           textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
           textInput("n_randomised_participants", "No. randomised participants", width = "100%", value = defaults()$n_randomised_participants), # TODO: consider validation (validate()/need())
-          textInput("n_centres", "No. centres", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
+          textInput("n_centres", "No. centres/sites", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
         ),
         box(width = 6,
           radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
