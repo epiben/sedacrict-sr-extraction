@@ -376,7 +376,8 @@ server <- function(session, input, output) {
       bsPopover(
         "recruitment_period", NULL,
         paste("Write 0 for missing month and 0000 for missing year.<br> If unavailable in ",
-              "the principal report, it can often be found in the repository where the trial was registered.")
+              "the principal report, it can often be found in the repository where the trial was registered."),
+        trigger = "focus"
       ),
       bsPopover(
         "trial_phase", NULL,
@@ -393,7 +394,8 @@ server <- function(session, input, output) {
               "inference method in itself], propensity-score based, stratification-score based, ",
               "hierarchical modelling, counterfactuals-as-missing, pre-specified DAG, ",
               "causal discovery, causal structure learning"),
-        placement = "top"
+        placement = "top",
+        trigger = "focus"
       ),
 
       fluidRow(
@@ -423,7 +425,7 @@ server <- function(session, input, output) {
           radioButtons("trial_stopped_early", "Trial stopped early?", choices = yes_no_choices, selected = defaults()$trial_stopped_early %||% character(0)),
           hidden(textInput("trial_stopped_reason", "Reason for terminating trial", value = defaults()$trial_stopped_reason %||% "N/A", placeholder = "E.g. futility or superiority")),
           hidden(radioButtons("trial_stopped_predefined_rule", "Terminated using predefined rule?", choices = if (is.null(defaults()$trial_stopped_predefined_rule) | isTRUE(defaults()$trial_stopped_predefined_rule == "N/A")) "N/A" else yes_no_choices, selected = defaults()$trial_stopped_predefined_rule %||% "N/A")),
-          textAreaInput("remarks", "Remarks", value = defaults()$remarks, width = "100%", rows = 2)
+          textAreaInput("remarks", "General remarks", value = defaults()$remarks, width = "100%", rows = 2)
         )
       ),
       fluidRow(
