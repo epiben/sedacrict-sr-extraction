@@ -357,7 +357,7 @@ server <- function(session, input, output) {
       c("", .)
     dbDisconnect(conn)
 
-    selectizeInput("rct_name", label = NULL, choices = choices, width = "100%", selected = "")
+    selectizeInput("rct_name", label = NULL, choices = choices, width = "100%", selected = pruned_data()$rct_name)
   })
 
 
