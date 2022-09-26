@@ -346,18 +346,13 @@ server <- function(session, input, output) {
     req(input$rct_selector_kicker)
 
     conn <- make_conn()
-    choices <- dbGetQuery(conn, glue(
-      "SELECT rct_name FROM rcts WHERE pending_{extractor_group()} = 1
-      UNION ALL
-      SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0;"
-    )) %>%
-      arrange(rct_name) %>%
-      unlist(use.names = FALSE) %>%
-      sample() %>% # minimise risk of several extractors "claiming" the same RCT
-      c("", .)
+    choices <- unlist(dbGetQuery(conn, glue("SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0;")), use.names = FALSE)
+    if (length(choices) == 0) { # take from shared pool
+      choices <- unlist(dbGetQuery(conn, glue("SELECT rct_name FROM rcts WHERE pending_{extractor_group()} = 1")), use.names = FALSE)
+    }
     dbDisconnect(conn)
 
-    selectizeInput("rct_name", label = NULL, choices = choices, width = "100%", selected = pruned_data()$rct_name)
+    selectizeInput("rct_name", label = NULL, choices = c("", choices), width = "100%", selected = pruned_data()$rct_name)
   })
 
 
