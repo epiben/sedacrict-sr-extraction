@@ -43,7 +43,9 @@ body <- dashboardBody(
       )
     ),
 
-    uiOutput("the_form")
+    uiOutput("the_form"),
+
+    uiOutput("progress_plot")
   )
 )
 

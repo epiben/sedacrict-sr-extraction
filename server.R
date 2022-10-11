@@ -2,7 +2,6 @@ server <- function(session, input, output) {
 
   # LOGIN LOGIC ====
 
-  # call the server part
   # check_credentials returns a function to authenticate users
   res_auth <- secure_server(
     check_credentials <- check_credentials(credentials)
@@ -26,11 +25,9 @@ server <- function(session, input, output) {
   }
 
   fetch_choices <- function(conn, col_name, table_name) {
-    out <- dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name}")) %>%
-      unlist(use.names = FALSE) %>%
-      sort()
+    out <- sort(dbGetQuery(conn, glue("SELECT {col_name} FROM {table_name}"))[[1]])
     top_idx <- out %in% c("None")
-    c(out[top_idx], out[!top_idx]) # ensure alphabetical order, but None at the top
+    c(out[top_idx], out[!top_idx]) # ensure original order, but None at the top
   }
 
   make_links <- function(urls) {
@@ -116,7 +113,10 @@ server <- function(session, input, output) {
 
   ascertain_required_fields <- function(pruned_input) {
     exempt_idx <- names(pruned_input) == "remarks"
-    all(map_lgl(pruned_input[!exempt_idx], ~ isTRUE(nchar(.) > 0 & !is.null(.))))
+    all(map_lgl(
+      pruned_input[!exempt_idx], 
+      ~ isTRUE(nchar(.) > 0 & !is.null(.)) | isTRUE(length(.) >= 2)
+    ))
   }
 
   # REACTIVE DATA OBJECTS ====
@@ -187,6 +187,7 @@ server <- function(session, input, output) {
 
     items_to_remove <- c(
       shiny_items_to_remove,
+      grep("^shinyjs\\-delay\\-.+", names(input_as_list), value = TRUE),
       names(input_as_list)[ci_idx_to_remove],
       names(input_as_list)[dataset_idx_to_remove]
     )
@@ -246,8 +247,10 @@ server <- function(session, input, output) {
   })
 
   observeEvent(input$save, {
+    shinyjs::disable("save")
     updateTextInput(session, "rct_selector_kicker", value = now())
     save_data(pruned_data())
+    shinyjs::delay(500, shinyjs::enable("save"))
   })
 
   observeEvent(input$cancel, {
@@ -307,6 +310,15 @@ server <- function(session, input, output) {
     }
   })
 
+  observeEvent(input$publication_year_principal_report, {
+    year_regex <- "0000|19[0-9][0-9]|20[0-1][0-9]|202[0-2]"
+    if(!grepl(year_regex, input$publication_year_principal_report) & isTRUE(nchar(input$publication_year_principal_report) > 0)) {
+      updateTextInput(session, "publication_year_principal_report", label = "Publication year, principal report - INVALID FORMAT")
+    } else {
+      updateTextInput(session, "publication_year_principal_report", label = "Publication year, principal report")
+    }
+  })
+
   observeEvent(input$recruitment_period, {
     period_regex <- "^([0-9]|1[0-2])/(0000|19[0-9][0-9]|20[0-1][0-9]|202[0-2])-([0-9]|1[0-2])/(0000|19[0-9][0-9]|20[0-1][0-9]|202[0-2])$"
     if(!grepl(period_regex, input$recruitment_period) & isTRUE(nchar(input$recruitment_period) > 0)) {
@@ -346,9 +358,11 @@ server <- function(session, input, output) {
     req(input$rct_selector_kicker)
 
     conn <- make_conn()
-    choices <- unlist(dbGetQuery(conn, glue("SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0;")), use.names = FALSE)
-    if (length(choices) == 0) { # take from shared pool
-      choices <- unlist(dbGetQuery(conn, glue("SELECT rct_name FROM rcts WHERE pending_{extractor_group()} = 1")), use.names = FALSE)
+    choices <- dbGetQuery(conn, glue("SELECT rct_name FROM extractions WHERE extractor = '{EXTRACTOR()}' AND extraction_done = 0"))$rct_name
+    if (length(choices) == 0) { 
+      # Take from shared pool
+      # List RCTs in random order to reduce risk of collisions
+      choices <- sample(dbGetQuery(conn, glue("SELECT rct_name FROM rcts WHERE pending_{extractor_group()} = 1"))$rct_name)
     }
     dbDisconnect(conn)
 
@@ -375,6 +389,11 @@ server <- function(session, input, output) {
         trigger = "focus"
       ),
       bsPopover(
+        "publication_year_principal_report", NULL,
+        "Write 0000 if unvailable (really should be available, though)",
+        trigger = "focus"
+      ),
+      bsPopover(
         "trial_phase", NULL,
         paste("Often available via e.g. ClinicalTrials.gov.<br> If not, make your best",
               "judgement as per e.g. <a href=\"https://en.wikipedia.org/wiki/Drug_development#Clinical_phase\" ",
@@ -393,9 +412,11 @@ server <- function(session, input, output) {
         trigger = "focus"
       ),
 
+      # UI elements
       fluidRow(
         column(6,
           strong("Links to trial repositories:", ),
+          hidden(textInput("accession_urls", label = NULL, value = if (isTRUE(defaults()$accession_urls == "")) "None" else defaults()$accession_urls %||% "None")),
           make_links(defaults()$accession_urls)
         ),
         column(6,
@@ -409,9 +430,10 @@ server <- function(session, input, output) {
           textInput("doi_principal_report", "DOI of principal report", width = "100%", value = defaults()$doi_principal_report),
           selectizeInput("journal_principal_report", "Journal of principal report", width = "100%", choices = c("", journals), selected = defaults()$journal_principal_report %||% character(0), options = list(create = TRUE)),
           textInput("publication_year_principal_report", "Publication year, principal report", width = "100%", value = defaults()$publication_year_principal_report, placeholder = "E.g. 2019"),
-          textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), # TODO: consider validation (validate()/need())
-          textInput("n_randomised_participants", "No. randomised participants", width = "100%", value = defaults()$n_randomised_participants), # TODO: consider validation (validate()/need())
-          textInput("n_centres", "No. centres/sites", width = "100%", value = defaults()$n_centres) # TODO: consider validation (validate()/need())
+          textInput("recruitment_period", "Recruitment period", width = "100%", value = defaults()$recruitment_period, placeholder = "E.g. 2/2015-10/2020"), 
+          radioButtons("any_predictive_enrichment", "Predictive enrichment used?", choices = yes_no_choices, selected = defaults()$any_predictive_enrichment %||% character(0)),
+          textInput("n_randomised_participants", "No. randomised participants", width = "100%", value = defaults()$n_randomised_participants), 
+          textInput("n_centres", "No. centres/sites", width = "100%", value = defaults()$n_centres) 
         ),
         box(width = 6,
           radioButtons("intervention_type", "Intervention type", width = "100%", choices = intervention_types, selected = defaults()$intervention_type %||% character(0)),
@@ -520,6 +542,60 @@ server <- function(session, input, output) {
 	    lapply(input$dataset_names, set_up_fields)
 	  }
 	})
+
+  # PLOTS ====
+
+  output$progress_plot <- renderUI({
+    req(input$rct_selector_kicker)
+    observe(input$rct_selector_kicker)
+
+    fluidRow(box(
+      width = 12, 
+      title = "Progress", 
+      plotOutput(
+        glue("progress_plot_workhorse"), 
+        height = ifelse(EXTRACTOR() == "BSKH", "400px", "250px")
+      ), 
+      collapsed = EXTRACTOR() == "BSKH", 
+      collapsible = TRUE
+    ))
+  })
+  
+  output$progress_plot_workhorse <- renderPlot({
+    conn <- make_conn()
+    df <- dbGetQuery(conn, "
+      SELECT extractor, extracted_data::json ->> 'timestamp' AS timestamp 
+      FROM extractions
+      WHERE extraction_done = 1
+    ") %>%
+      mutate(
+        timestamp = ymd_hms(timestamp),
+        extractor = if (EXTRACTOR() == "BSKH") { extractor} else { ifelse(extractor %in% c("BSKH", "FINAL"), extractor, "REST") }
+      ) %>%
+      group_by(extractor) %>%
+      mutate(n_extracted = row_number(timestamp)) 
+    
+    pad_df <- df %>%
+      summarise(
+        n_extracted = c(0, max(n_extracted)),
+        timestamp = c(ymd_hms("2022-09-14 12:00:00 UTC"), now())
+      )
+    dbDisconnect(conn)
+
+    p <- ggplot(bind_rows(df, pad_df), aes(timestamp, n_extracted, colour = extractor, group = extractor)) +
+      geom_step(size = 0.5) +
+      geom_label(aes(label = n_extracted), filter(pad_df, n_extracted > 0), hjust = 0, show.legend = FALSE) +
+      labs(x = "", y = "Cumulative N") +
+      theme_minimal() +
+      theme(panel.background = element_blank(), legend.title = element_blank())
+
+    if (EXTRACTOR() == "BSKH") {
+      p + scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 10, base = 10))
+    } else {
+      p
+    }
+  })
 }
+
 
 server
