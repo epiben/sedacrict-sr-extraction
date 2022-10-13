@@ -570,7 +570,7 @@ server <- function(session, input, output) {
     ") %>%
       mutate(
         timestamp = ymd_hms(timestamp),
-        extractor = if (EXTRACTOR() == "BSKH") { extractor} else { ifelse(extractor %in% c("BSKH", "FINAL"), extractor, "REST") }
+        extractor = if (EXTRACTOR() == "BSKH") { extractor } else { ifelse(extractor %in% c("BSKH", "FINAL"), extractor, "REST") }
       ) %>%
       group_by(extractor) %>%
       mutate(n_extracted = row_number(timestamp)) 
@@ -585,6 +585,8 @@ server <- function(session, input, output) {
     p <- ggplot(bind_rows(df, pad_df), aes(timestamp, n_extracted, colour = extractor, group = extractor)) +
       geom_step(size = 0.5) +
       geom_label(aes(label = n_extracted), filter(pad_df, n_extracted > 0), hjust = 0, show.legend = FALSE) +
+      geom_hline(yintercept = 266, linetype = 2, size = 0.5) +
+      annotate(geom = "label", x = ymd_hms("2022-09-14 12:00:00 UTC"), y = 266, label = "Target", hjust = 0) +
       labs(x = "", y = "Cumulative N") +
       theme_minimal() +
       theme(panel.background = element_blank(), legend.title = element_blank())
