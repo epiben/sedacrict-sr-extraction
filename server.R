@@ -366,12 +366,7 @@ server <- function(session, input, output) {
     }
     dbDisconnect(conn)
 
-    selected_rct <- pruned_data()$rct_name
-    if (EXTRACTOR() == "BSKH") {
-      selected_rct <- selected_rct %||% choices[1]
-    } 
-
-    selectizeInput("rct_name", label = NULL, choices = c("", choices), width = "100%", selected = selected_rct)
+    selectizeInput("rct_name", label = NULL, choices = c("", choices), width = "100%", selected = pruned_data()$rct_name)
   })
 
 
